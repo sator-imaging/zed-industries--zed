@@ -1654,6 +1654,7 @@ pub struct Workspace {
     persisted_recent_navigation_history: Vec<PathBuf>,
     last_active_project_path: Option<ProjectPath>,
     restoring_workspace: bool,
+    is_remote_connection_placeholder: bool,
 }
 
 impl EventEmitter<Event> for Workspace {}
@@ -2156,6 +2157,7 @@ impl Workspace {
             persisted_recent_navigation_history: Vec::new(),
             last_active_project_path: None,
             restoring_workspace: false,
+            is_remote_connection_placeholder: false,
         }
     }
 
@@ -7511,6 +7513,10 @@ impl Workspace {
         }
     }
 
+    pub fn mark_as_remote_connection_placeholder(&mut self) {
+        self.is_remote_connection_placeholder = true;
+    }
+
     pub fn database_id(&self) -> Option<WorkspaceId> {
         self.database_id
     }
@@ -7786,6 +7792,9 @@ impl Workspace {
     }
 
     fn workspace_location(&self, cx: &App) -> WorkspaceLocation {
+        if self.is_remote_connection_placeholder {
+            return WorkspaceLocation::None;
+        }
         let paths = PathList::new(&self.root_paths(cx));
         if let Some(connection) = self.project.read(cx).remote_connection_options(cx) {
             WorkspaceLocation::Location(SerializedWorkspaceLocation::Remote(connection), paths)
@@ -8055,6 +8064,10 @@ impl Workspace {
 
     /// Multiworkspace uses this to add workspace action handling to itself
     pub fn actions(&self, div: Div, window: &mut Window, cx: &mut Context<Self>) -> Div {
+        if self.is_remote_connection_placeholder {
+            return div.on_action(|_: &NewFile, _, _| {});
+        }
+
         let active_item_is_read_only = self
             .active_item(cx)
             .is_some_and(|item| !item.capability(cx).editable());
@@ -9557,6 +9570,15 @@ impl Render for Workspace {
             log::info!("Rendered first frame");
         }
 
+        if self.is_remote_connection_placeholder {
+            return div()
+                .size_full()
+                .flex()
+                .flex_col()
+                .bg(cx.theme().colors().background)
+                .children(self.titlebar_item.clone());
+        }
+
         let pad_center_pane = self.centered_layout
             && self.center.panes().len() == 1
             && self.active_item(cx).is_some();
@@ -10317,7 +10339,8 @@ pub async fn restore_multiworkspace(
         }
     };
 
-    apply_restored_multiworkspace_state(window_handle, &state, app_state.fs.clone(), cx).await;
+    apply_restored_multiworkspace_state(window_handle, &state, app_state.fs.clone(), true, cx)
+        .await;
 
     window_handle
         .update(cx, |_, window, _cx| {
@@ -10332,6 +10355,7 @@ pub async fn apply_restored_multiworkspace_state(
     window_handle: WindowHandle<MultiWorkspace>,
     state: &MultiWorkspaceState,
     fs: Arc<dyn fs::Fs>,
+    restore_window_state: bool,
     cx: &mut AsyncApp,
 ) {
     let MultiWorkspaceState {
@@ -10374,9 +10398,28 @@ pub async fn apply_restored_multiworkspace_state(
 
         window_handle
             .update(cx, |multi_workspace, _window, cx| {
-                multi_workspace.restore_project_groups(resolved_groups, cx);
+                let groups = if restore_window_state {
+                    resolved_groups
+                } else {
+                    multi_workspace
+                        .project_groups(cx)
+                        .into_iter()
+                        .map(|group| SerializedProjectGroupState {
+                            key: group.key,
+                            expanded: group.expanded,
+                        })
+                        .chain(resolved_groups)
+                        .collect()
+                };
+                multi_workspace.restore_project_groups(groups, cx);
+                multi_workspace.serialize(cx);
+                cx.notify();
             })
             .ok();
+    }
+
+    if !restore_window_state {
+        return;
     }
 
     if *sidebar_open {
@@ -11205,9 +11248,15 @@ pub fn open_paths(
                         .filter(|window| windows.contains(window))
                         .or_else(|| windows.into_iter().next());
                     window.filter(|window| {
-                        window
-                            .read(cx)
-                            .is_ok_and(|mw| mw.multi_workspace_enabled(cx))
+                        window.read(cx).is_ok_and(|multi_workspace| {
+                            multi_workspace.multi_workspace_enabled(cx)
+                                && multi_workspace
+                                    .workspace()
+                                    .read(cx)
+                                    .visible_worktrees(cx)
+                                    .next()
+                                    .is_some()
+                        })
                     })
                 });
 
@@ -11417,6 +11466,7 @@ pub fn open_remote_project_with_new_connection(
     delegate: Arc<dyn RemoteClientDelegate>,
     app_state: Arc<AppState>,
     paths: Vec<PathBuf>,
+    activate_window: bool,
     cx: &mut App,
 ) -> Task<Result<(Option<Entity<Workspace>>, Vec<Option<Box<dyn ItemHandle>>>)>> {
     cx.spawn(async move |cx| {
@@ -11462,6 +11512,7 @@ pub fn open_remote_project_with_new_connection(
             window,
             None,
             None,
+            activate_window,
             cx,
         )
         .await?;
@@ -11492,6 +11543,7 @@ pub fn open_remote_project_with_existing_connection(
             window,
             provisional_project_group_key,
             source_workspace,
+            true,
             cx,
         )
         .await
@@ -11507,6 +11559,7 @@ async fn open_remote_project_inner(
     window: WindowHandle<MultiWorkspace>,
     provisional_project_group_key: Option<ProjectGroupKey>,
     source_workspace: Option<WeakEntity<Workspace>>,
+    activate_window: bool,
     cx: &mut AsyncApp,
 ) -> Result<(Entity<Workspace>, Vec<Option<Box<dyn ItemHandle>>>)> {
     let mut project_paths_to_open = vec![];
@@ -11588,7 +11641,9 @@ async fn open_remote_project_inner(
 
     let items = window
         .update(cx, |_, window, cx| {
-            window.activate_window();
+            if activate_window {
+                window.activate_window();
+            }
             workspace.update(cx, |_workspace, cx| {
                 open_items(serialized_workspace, project_paths_to_open, window, cx)
             })
