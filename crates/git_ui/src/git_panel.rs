@@ -74,8 +74,8 @@ use prompt_store::RULES_FILE_NAMES;
 
 use serde::{Deserialize, Serialize};
 use settings::{
-    GitPanelClickBehavior, GitPanelGroupBy, GitPanelSortBy, Settings, SettingsStore, StatusStyle,
-    update_settings_file,
+    GitPanelClickBehavior, GitPanelGroupBy, GitPanelLayout, GitPanelSortBy, Settings,
+    SettingsStore, StatusStyle, update_settings_file,
 };
 use smallvec::SmallVec;
 use std::cell::Cell;
