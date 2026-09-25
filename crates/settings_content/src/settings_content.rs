@@ -882,6 +882,27 @@ pub enum GitPanelGroupBy {
 }
 
 #[derive(
+    Copy,
+    Clone,
+    Debug,
+    Default,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    MergeFrom,
+    PartialEq,
+    Eq,
+    strum::VariantArray,
+    strum::VariantNames,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum GitPanelLayout {
+    #[default]
+    TabbedTop,
+    TabbedBottom,
+}
+
+#[derive(
     Default,
     Copy,
     Clone,

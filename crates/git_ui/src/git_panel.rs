@@ -9031,9 +9031,12 @@ impl Render for GitPanel {
             .child(
                 v_flex()
                     .size_full()
-                    .when(!self.commit_editor_expanded, |this| {
-                        this.child(self.render_tab_bar(cx))
-                    })
+                    .when(
+                        !self.commit_editor_expanded
+                            && GitPanelSettings::get_global(cx).panel_layout
+                                == GitPanelLayout::TabbedTop,
+                        |this| this.child(self.render_tab_bar(cx)),
+                    )
                     .map(|this| match self.active_tab {
                         GitPanelTab::Changes => this
                             .children(self.render_changes_header(window, cx))
@@ -9062,6 +9065,12 @@ impl Render for GitPanel {
                             }),
                         GitPanelTab::History => this.child(self.render_history_tab(window, cx)),
                     })
+                    .when(
+                        !self.commit_editor_expanded
+                            && GitPanelSettings::get_global(cx).panel_layout
+                                == GitPanelLayout::TabbedBottom,
+                        |this| this.child(self.render_tab_bar(cx)),
+                    )
                     .into_any_element(),
             )
             .children(self.context_menu.as_ref().map(|context_menu| {
