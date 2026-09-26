@@ -35,7 +35,7 @@ jobs:
         run: |
           Remove-Item -Recurse -Path "./../.cargo" -Force -ErrorAction SilentlyContinue
         shell: pwsh
-    timeout-minutes: 60
+    timeout-minutes: 120
   clippy_windows:
     runs-on: windows-latest
     steps:
@@ -101,7 +101,7 @@ jobs:
         name: zed-remote-server-windows-x86_64.zip
         path: target/zed-remote-server-windows-x86_64.zip
         if-no-files-found: error
-    timeout-minutes: 60
+    timeout-minutes: 120
   upload_release_assets:
     needs:
     - bundle_windows_x86_64
