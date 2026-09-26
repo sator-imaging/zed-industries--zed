@@ -69,7 +69,7 @@ jobs:
         shell: pwsh
     timeout-minutes: 60
   bundle_windows_x86_64:
-    needs:
+    #needs:
     #- run_tests_windows
     #- clippy_windows
     runs-on: windows-latest
