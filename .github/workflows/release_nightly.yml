@@ -32,7 +32,7 @@ jobs:
           shared-key: ${{ github.repository }}-${{ github.workflow }}
 
       - name: steps::cargo_nextest
-        run: cargo nextest run --workspace --no-fail-fast --no-tests=warn
+        run: cargo nextest run --workspace --no-tests=warn  #  --no-fail-fast
         shell: pwsh
       - name: steps::cleanup_cargo_config
         if: always()
