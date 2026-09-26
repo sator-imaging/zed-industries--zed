@@ -24,8 +24,12 @@ jobs:
         shell: pwsh
 
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      #  with:
+      #    components: clippy  #rustfmt, 
       - uses: taiki-e/install-action@nextest
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ github.workflow }}
 
       - name: steps::cargo_nextest
         run: cargo nextest run --workspace --no-fail-fast --no-tests=warn
@@ -54,6 +58,8 @@ jobs:
           components: clippy  #rustfmt, 
       #- uses: taiki-e/install-action@nextest
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ github.workflow }}
 
       - name: steps::clippy
         run: ./script/clippy.ps1
@@ -78,29 +84,38 @@ jobs:
       TIMESTAMP_DIGEST: SHA256
       TIMESTAMP_SERVER: http://timestamp.acs.microsoft.com
     steps:
-    - name: steps::checkout_repo
-      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
-      with:
-        clean: false
-    - name: steps::clear_target_dir_if_large
-      run: ./script/clear-target-dir-if-larger-than.ps1 350 200
-      shell: pwsh
-    - name: run_bundling::bundle_windows::bundle_windows
-      run: script/bundle-windows.ps1 -Architecture x86_64
-      shell: pwsh
-      working-directory: ${{ env.ZED_WORKSPACE }}
-    - name: run_bundling::upload_artifact
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: Zed-x86_64.exe
-        path: target/Zed-x86_64.exe
-        if-no-files-found: error
-    - name: run_bundling::upload_artifact
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: zed-remote-server-windows-x86_64.zip
-        path: target/zed-remote-server-windows-x86_64.zip
-        if-no-files-found: error
+      - name: steps::checkout_repo
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          clean: false
+
+      #- uses: dtolnay/rust-toolchain@stable
+      #  with:
+      #    components: clippy  #rustfmt, 
+      #- uses: taiki-e/install-action@nextest
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ github.workflow }}
+
+      - name: steps::clear_target_dir_if_large
+        run: ./script/clear-target-dir-if-larger-than.ps1 350 200
+        shell: pwsh
+      - name: run_bundling::bundle_windows::bundle_windows
+        run: script/bundle-windows.ps1 -Architecture x86_64
+        shell: pwsh
+        working-directory: ${{ env.ZED_WORKSPACE }}
+      - name: run_bundling::upload_artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: Zed-x86_64.exe
+          path: target/Zed-x86_64.exe
+          if-no-files-found: error
+      - name: run_bundling::upload_artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: zed-remote-server-windows-x86_64.zip
+          path: target/zed-remote-server-windows-x86_64.zip
+          if-no-files-found: error
     timeout-minutes: 120
   upload_release_assets:
     needs:
