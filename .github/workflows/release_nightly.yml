@@ -29,7 +29,7 @@ jobs:
       - uses: taiki-e/install-action@nextest
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: ${{ github.workflow }}
+          shared-key: ${{ github.repository }}-${{ github.workflow }}
 
       - name: steps::cargo_nextest
         run: cargo nextest run --workspace --no-fail-fast --no-tests=warn
@@ -59,7 +59,7 @@ jobs:
       #- uses: taiki-e/install-action@nextest
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: ${{ github.workflow }}
+          shared-key: ${{ github.repository }}-${{ github.workflow }}
 
       - name: steps::clippy
         run: ./script/clippy.ps1
@@ -95,7 +95,7 @@ jobs:
       #- uses: taiki-e/install-action@nextest
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: ${{ github.workflow }}
+          shared-key: ${{ github.repository }}-${{ github.workflow }}
 
       - name: steps::clear_target_dir_if_large
         run: ./script/clear-target-dir-if-larger-than.ps1 350 200
