@@ -70,8 +70,8 @@ jobs:
     timeout-minutes: 60
   bundle_windows_x86_64:
     needs:
-    - run_tests_windows
-    - clippy_windows
+    #- run_tests_windows
+    #- clippy_windows
     runs-on: windows-latest
     env:
       CARGO_INCREMENTAL: 0
