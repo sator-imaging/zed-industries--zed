@@ -34,7 +34,7 @@ jobs:
           cache-workspace-crates: true
 
       - name: steps::cargo_nextest
-        run: cargo nextest run --workspace --no-tests=warn  #  --no-fail-fast
+        run: cargo test --workspace  ##cargo nextest run --workspace --no-tests=warn  #  --no-fail-fast
         shell: pwsh
       - name: steps::cleanup_cargo_config
         if: always()
