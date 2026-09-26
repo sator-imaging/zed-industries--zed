@@ -6684,6 +6684,25 @@ fn panels_page() -> SettingsPage {
                 files: USER,
             }),
             SettingsPageItem::SettingItem(SettingItem {
+                title: "Git Panel Layout",
+                description: "Configure panel layout.",
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("git_panel.panel_layout"),
+                    pick: |settings_content| {
+                        settings_content.git_panel.as_ref()?.panel_layout.as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content
+                            .git_panel
+                            .get_or_insert_default()
+                            .panel_layout = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
                 title: "Commit Title Max Length",
                 description: "Maximum length of the commit message title before a warning is shown. Set to 0 to disable.",
                 field: Box::new(SettingField {
