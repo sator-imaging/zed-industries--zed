@@ -31,6 +31,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ${{ github.repository }}-${{ github.workflow }}
+          cache-workspace-crates: true
 
       - name: steps::cargo_nextest
         run: cargo nextest run --workspace --no-tests=warn  #  --no-fail-fast
@@ -61,6 +62,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ${{ github.repository }}-${{ github.workflow }}
+          cache-workspace-crates: true
 
       - name: steps::clippy
         run: ./script/clippy.ps1
@@ -97,6 +99,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ${{ github.repository }}-${{ github.workflow }}
+          cache-workspace-crates: true
 
       - name: steps::clear_target_dir_if_large
         run: ./script/clear-target-dir-if-larger-than.ps1 350 200
